@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>তাসবিহ - আমল ও ডিজিটাল কুরআন</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Galada&family=Hind+Siliguri:wght@300;400;700&family=Scheherazade+New:wght@400;700&family=Amiri:wght@400;700&family=Cairo:wght@400;700&family=Noto+Sans+Bengali:wght@300;400;700&family=Mina:wght@400;700&family=Atma:wght@400;700&family=Tiro+Bangla&family=Reem+Kufi:wght@400;700&family=Almarai:wght@400;700&family=Lateef&family=Noto+Naskh+Arabic:wght@400;700&display=swap" rel="stylesheet">
+	
+    <style>
+        :root {
+            --bn-font: 'Hind Siliguri';
+            --ar-font: 'Traditional Arabic';
+            --bn-size: 1.1rem;
+            --ar-size: 2.2rem;
+            --bn-weight: 400;
+            --ar-weight: 400;
+            --card-bg: #ffffff;
+            --body-bg: #f0fdf4;
+            --text-color: #1a202c;
+        }
+
+        body.dark-mode {
+            --body-bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f1f5f9;
+        }
+
+        body {
+            font-family: var(--bn-font), sans-serif;
+            background-color: var(--body-bg);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            scroll-behavior: smooth;
+        }
+
+        .logo-font { font-family: 'Galada', cursive; }
+        .bn-text { font-family: var(--bn-font), sans-serif; font-size: var(--bn-size); font-weight: var(--bn-weight); }
+        
+        .arabic-text { 
+            direction: rtl; 
+            font-family: var(--ar-font), "Traditional Arabic", serif; 
+            font-size: var(--ar-size); 
+            font-weight: var(--ar-weight);
+            line-height: 2.2;
+            text-align: justify;
+            text-justify: inter-word;
+        }
+
+        .custom-card {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            border-radius: 1.5rem;
+        }
+        
+        .accordion-content {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .accordion-content > div { overflow: hidden; }
+        .expanded .accordion-content { grid-template-rows: 1fr; }
+
+        .tab-active { background-color: #065f46; color: white; box-shadow: 0 4px 12px rgba(6, 95, 70, 0.3); }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .show-modal { display: flex; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .glass-header { background: linear-gradient(135deg, #065f46 0%, #064e3b 100%); }
+        
+        .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+        .color-dot.active { border-color: #065f46; transform: scale(1.1); }
+
+        .fab-button {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            background-color: #065f46;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(6, 95, 70, 0.4);
+            z-index: 999;
+            cursor: pointer;
+        }
+        
+        .quran-verse-card { 
+            background-color: var(--card-bg);
+            border: 1px solid rgba(0,0,0,0.05);
+            margin-bottom: 1rem;
+            padding: 1.5rem;
+            border-radius: 1.5rem;
+        }
+
+        #toast {
+            visibility: hidden;
+            min-width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 50px;
+            padding: 12px 24px;
+            position: fixed;
+            z-index: 2000;
+            left: 50%;
+            bottom: 120px;
+            transform: translateX(-50%);
+            font-size: 14px;
+        }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 120px; opacity: 1; } }
+        @keyframes fadeout { from { bottom: 120px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+
+        .ayah-highlight { animation: highlight 2s ease-in-out; }
+        @keyframes highlight { 0% { box-shadow: 0 0 0 4px #065f46; } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+        .amol-done { border-left: 8px solid #059669 !important; opacity: 0.7; }
+
+        .loading-spinner { border: 4px solid rgba(0, 0, 0, 0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #065f46; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Custom Checkbox */
+        .amol-checkbox {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: 2px solid #059669;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .amol-checkbox.checked { background-color: #059669; }
+        .amol-checkbox svg { opacity: 0; transform: scale(0.5); transition: all 0.2s; }
+        .amol-checkbox.checked svg { opacity: 1; transform: scale(1); }
+    </style>
+</head>
+<body class="pb-40">
+
+    <header class="glass-header text-white p-5 shadow-2xl sticky top-0 z-50 rounded-b-[2.5rem]">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div onclick="showView('amol')" class="cursor-pointer">
+                <h1 class="text-3xl font-normal logo-font">তাসবিহ</h1>
+                <p id="header-subtitle" class="text-[10px] opacity-80 mt-[-4px]">জীবনের প্রতিটি মুহূর্ত হোক ইবাদতে</p>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <button onclick="toggleQuranMode()" id="quranToggleBtn" class="bg-white/10 px-3 py-2 rounded-xl hover:bg-white/20 border border-white/10 flex items-center space-x-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                    <span class="text-xs font-bold">কুরআন</span>
+                </button>
+                
+                <button onclick="openModal('duaModal')" id="headerAddBtn" class="bg-white text-emerald-900 px-4 py-2 rounded-xl font-bold shadow-lg text-xs transition-all active:scale-95">
+                    + আমল
+                </button>
+
+                <button onclick="openModal('settingsModal')" class="bg-white/10 p-2 rounded-xl hover:bg-white/20 border border-white/10">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div id="amol-section" class="max-w-4xl mx-auto px-4 mt-6 space-y-4">
+        <div class="relative">
+            <input type="text" id="searchInput" oninput="filterAmols(this.value)" placeholder="সব বিভাগ থেকে আমল খুঁজুন..." class="w-full p-4 pl-12 bg-white dark:bg-slate-800 rounded-2xl shadow-sm outline-none ring-1 ring-emerald-100 dark:ring-slate-700 dark:text-white transition-all">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-4 top-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+        </div>
+        <nav id="nav-tabs"><div id="tabs-container" class="flex space-x-2 overflow-x-auto no-scrollbar py-2"></div></nav>
+        <main class="space-y-4" id="dua-list"></main>
+    </div>
+
+    <div id="quran-section" class="max-w-4xl mx-auto px-4 mt-6 hidden">
+        <div id="surah-list-view">
+            <div class="relative mb-6">
+                <input type="text" id="quranSearchInput" oninput="filterSurahs(this.value)" placeholder="সূরার নাম খুঁজুন..." class="w-full p-4 pl-12 bg-white dark:bg-slate-800 rounded-2xl shadow-sm outline-none ring-1 ring-emerald-100 dark:ring-slate-700 dark:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute left-4 top-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </div>
+            <div id="surah-list-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+        </div>
+
+        <div id="surah-reading-view" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <button onclick="backToSurahList()" class="flex items-center text-emerald-600 font-bold space-x-2 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-2 rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                    <span>সূচি</span>
+                </button>
+                <button onclick="openModal('gotoAyahModal')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md">
+                    আয়াতে যান
+                </button>
+            </div>
+            <div id="surah-content">
+                <div id="quran-loader" class="flex flex-col items-center py-20 hidden">
+                    <div class="loading-spinner mb-4"></div>
+                    <p class="bn-text text-gray-400">লোড হচ্ছে...</p>
+                </div>
+                <div id="verses-container" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="fab-button" onclick="openModal('tasbihModal')">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" /></svg>
+    </div>
+
+    <div id="settingsModal" class="modal px-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-[2.5rem] p-6 shadow-2xl overflow-hidden">
+            <h2 class="text-xl font-bold dark:text-white mb-6 text-center border-b pb-2">সেটিংস ও ব্যাকআপ</h2>
+            <div class="space-y-4 max-h-[65vh] overflow-y-auto pr-2 no-scrollbar">
+                
+                <!-- History Section -->
+                <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-3xl space-y-3">
+                    <p class="font-bold text-emerald-800 dark:text-emerald-400 text-sm">আমল করার ইতিহাস (গত ৭ দিন)</p>
+                    <div id="history-container" class="flex flex-col space-y-2">
+                        <!-- History items will be injected here -->
+                    </div>
+                </div>
+
+                <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-3xl space-y-3">
+                    <p class="font-bold text-emerald-800 dark:text-emerald-400 text-sm">ডেটা ব্যাকআপ ও রিস্টোর</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="exportData()" class="bg-emerald-600 text-white py-2 rounded-xl text-xs font-bold">Export (সেভ)</button>
+                        <button onclick="document.getElementById('importInput').click()" class="bg-blue-600 text-white py-2 rounded-xl text-xs font-bold">Import (লোড)</button>
+                    </div>
+                    <input type="file" id="importInput" onchange="importData(event)" class="hidden" accept=".json">
+                </div>
+
+                <div class="flex justify-between items-center p-4 bg-gray-50 dark:bg-slate-700 rounded-3xl">
+                    <span class="font-bold dark:text-white">নাইট মোড</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="nightModeToggle" onchange="toggleNightMode(this.checked)" class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                    </label>
+                </div>
+                
+                <div class="p-4 bg-gray-50 dark:bg-slate-700 rounded-3xl text-center">
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-3">ব্যাকগ্রাউন্ড রঙ পরিবর্তন</p>
+                    <div class="flex justify-center flex-wrap gap-3" id="color-palette"></div>
+                </div>
+
+                <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-3xl space-y-3">
+                    <p class="font-bold text-sm dark:text-emerald-400">বাংলা ফন্ট ও সাইজ</p>
+                    <select onchange="updateSetting('bnFont', this.value)" id="bnFontSelect" class="w-full p-2.5 rounded-xl text-sm outline-none dark:bg-slate-800 dark:text-white">
+                        <option value="'Hind Siliguri'">Hind Siliguri</option>
+                        <option value="'Noto Sans Bengali'">Noto Sans</option>
+                        <option value="'Mina'">Mina</option>
+                    </select>
+                    <input type="range" min="0.8" max="1.5" step="0.1" id="bnSizeRange" oninput="updateSetting('bnSize', this.value + 'rem')" class="w-full accent-emerald-600">
+                </div>
+
+                <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-3xl space-y-3">
+                    <p class="font-bold text-sm dark:text-blue-400">আরবি ফন্ট ও সাইজ</p>
+                    <select onchange="updateSetting('arFont', this.value)" id="arFontSelect" class="w-full p-2.5 rounded-xl text-sm outline-none dark:bg-slate-800 dark:text-white">
+                        <option value="'Traditional Arabic'">Traditional Arabic</option>
+                        <option value="'Scheherazade New'">Kolkata Print</option>
+                        <option value="'Amiri'">Amiri</option>
+                        <option value="'Cairo'">Cairo</option>
+                    </select>
+                    <input type="range" min="1.5" max="3.5" step="0.1" id="arSizeRange" oninput="updateSetting('arSize', this.value + 'rem')" class="w-full accent-blue-600">
+                </div>
+                
+                <div class="p-4 bg-red-50 dark:bg-red-900/20 rounded-3xl">
+                    <button onclick="openModal('catModal')" class="w-full py-2 text-red-600 font-bold">বিভাগ ম্যানেজমেন্ট</button>
+                </div>
+            </div>
+            <button onclick="closeModal('settingsModal')" class="w-full py-4 text-emerald-600 font-bold mt-4 border-t dark:border-slate-700">বন্ধ করুন</button>
+        </div>
+    </div>
+
+    <div id="tasbihModal" class="modal px-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[3rem] p-8 shadow-2xl text-center relative">
+            <button onclick="closeModal('tasbihModal')" class="absolute top-6 right-6 text-gray-400 hover:text-red-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12" /></svg></button>
+            <div class="py-10"><span id="popup-tCount" class="text-8xl font-black text-emerald-800 dark:text-emerald-400 leading-none">0</span></div>
+            <button onclick="incT()" class="w-32 h-32 bg-emerald-600 text-white rounded-full mx-auto flex items-center justify-center shadow-xl active:scale-95 mb-8"><svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" /></svg></button>
+            <div class="flex justify-center space-x-6">
+                <button onclick="openModal('targetModal')" class="text-gray-400 font-bold text-xs">লক্ষ্য সেট</button>
+                <button onclick="resetT()" class="text-gray-400 font-bold text-xs">রিসেট</button>
+            </div>
+            <div id="popup-tTarget" class="mt-4 text-[10px] font-bold text-emerald-600"></div>
+        </div>
+    </div>
+
+    <div id="gotoAyahModal" class="modal px-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-xs rounded-[2rem] p-8 shadow-2xl text-center">
+            <h3 class="text-lg font-bold mb-4 dark:text-white">আয়াতের নম্বর লিখুন</h3>
+            <input type="number" id="ayahJumpInput" placeholder="উদা: ৫" class="w-full p-4 bg-gray-50 dark:bg-slate-700 dark:text-white rounded-2xl outline-none ring-1 mb-6 text-center text-xl font-bold">
+            <div class="flex space-x-3">
+                <button onclick="closeModal('gotoAyahModal')" class="flex-1 py-3 bg-gray-100 rounded-2xl">বাতিল</button>
+                <button onclick="jumpToAyah()" class="flex-1 py-3 bg-emerald-600 text-white rounded-2xl">যাও</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="duaModal" class="modal px-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl">
+            <div class="bg-emerald-800 p-6 text-white flex justify-between items-center"><h2 class="text-lg font-bold">নতুন আমল যোগ</h2><button onclick="closeModal('duaModal')">&times;</button></div>
+            <form id="duaForm" class="p-6 space-y-4">
+                <select id="fCat" class="w-full p-4 bg-gray-50 dark:bg-slate-700 rounded-2xl dark:text-white outline-none"></select>
+                <input type="text" id="fTitle" placeholder="দোয়ার নাম" required class="w-full p-4 bg-gray-50 dark:bg-slate-700 rounded-2xl dark:text-white outline-none">
+                <textarea id="fArabic" placeholder="আরবি দোয়া" class="w-full p-4 bg-gray-50 dark:bg-slate-700 rounded-2xl h-32 dark:text-white outline-none"></textarea>
+                <textarea id="fMeaning" placeholder="বাংলা অর্থ" class="w-full p-4 bg-gray-50 dark:bg-slate-700 rounded-2xl h-24 dark:text-white outline-none"></textarea>
+                <button type="submit" class="w-full bg-emerald-800 text-white py-4 rounded-2xl font-bold shadow-xl">সংরক্ষণ করুন</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="catModal" class="modal px-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl text-center">
+            <h2 class="text-xl font-bold dark:text-white mb-6">বিভাগ ম্যানেজমেন্ট</h2>
+            <input type="text" id="newCatName" placeholder="নতুন বিভাগ" class="w-full p-4 bg-gray-50 dark:bg-slate-700 rounded-2xl mb-4 outline-none dark:text-white">
+            <button onclick="addNewCategory()" class="w-full py-3 bg-emerald-600 text-white rounded-2xl font-bold mb-3 shadow-lg">যুক্ত করুন</button>
+            <button onclick="openDeleteSelection()" class="w-full py-3 text-red-500 font-bold border border-red-100 rounded-2xl">বিভাগ বাদ দিন</button>
+            <button onclick="closeModal('catModal')" class="mt-4 text-gray-400 text-sm">বন্ধ করুন</button>
+        </div>
+    </div>
+
+    <div id="deleteSelectionModal" class="modal px-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[2.5rem] overflow-hidden shadow-2xl">
+            <div class="p-6 bg-red-50 dark:bg-red-900/20 text-red-600 text-center font-bold">কোনটি বাদ দিবেন?</div>
+            <div id="category-delete-list" class="max-h-60 overflow-y-auto p-4 space-y-2"></div>
+            <button onclick="closeModal('deleteSelectionModal'); openModal('catModal')" class="w-full py-4 text-gray-400 font-bold border-t dark:border-slate-700">পিছনে যান</button>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal px-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[2rem] p-8 shadow-2xl text-center">
+            <h2 class="text-xl font-bold dark:text-white mb-6">আমলটি মুছে ফেলবেন?</h2>
+            <div class="flex space-x-3"><button onclick="closeModal('confirmModal')" class="flex-1 py-3 bg-gray-100 rounded-2xl">বাতিল</button><button onclick="executeDelete()" class="flex-1 py-3 bg-red-600 text-white rounded-2xl">হ্যাঁ, মুছুন</button></div>
+        </div>
+    </div>
+
+    <div id="targetModal" class="modal px-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-xs rounded-[2rem] p-8 shadow-2xl text-center">
+            <h3 class="text-lg font-bold mb-4 dark:text-white">লক্ষ্য সেট করুন</h3>
+            <input type="number" id="targetInput" placeholder="যেমন: ৩৩" class="w-full p-4 bg-gray-50 dark:bg-slate-700 dark:text-white rounded-2xl outline-none ring-1 mb-6 text-center text-xl font-bold">
+            <div class="flex space-x-3">
+                <button onclick="closeModal('targetModal')" class="flex-1 py-3 bg-gray-100 rounded-2xl">বাতিল</button>
+                <button onclick="saveTarget()" class="flex-1 py-3 bg-emerald-600 text-white rounded-2xl">সেভ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const defaultCategories = ["সকাল", "সন্ধ্যা", "রাত", "নামাজের পর"];
+        const defaultAppData = {
+            "সকাল": [{ id: 101, title: "আয়াতুল কুরসি", arabic: "اللَّهُ لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ...", meaning: "ফজিলত: পাঠ করলে সন্ধ্যা পর্যন্ত শয়তান থেকে নিরাপদ থাকা যায়।" }],
+            "সন্ধ্যা": [{ id: 201, title: "সাইয়্যিদুল ইস্তিগফার", arabic: "اللَّهُمَّ أَنْتَ رَبِّي...", meaning: "জান্নাত পাওয়ার আমল।" }],
+            "রাত": [{ id: 301, title: "সুরা মুলক", arabic: "تَبَارَكَ الَّذِي بِيَدِهِ الْمُلْكُ...", meaning: "কবরের আজাব থেকে মুক্তি।" }],
+            "নামাজের পর": [{ id: 401, title: "তাসবিহ", arabic: "সুবহানাল্লাহ, আলহামদুলিল্লাহ...", meaning: "৩৩ বার করে পাঠ।" }]
+        };
+
+        const colorPalette = ["#ffffff", "#f0fdf4", "#eff6ff", "#fff7ed", "#faf5ff", "#fdfcf0"];
+        
+        let categories = JSON.parse(localStorage.getItem('amolCategories')) || defaultCategories;
+        let appData = JSON.parse(localStorage.getItem('amolData')) || defaultAppData;
+        
+        // Completion and History Data
+        let completions = JSON.parse(localStorage.getItem('amolCompletions')) || {};
+        let history = JSON.parse(localStorage.getItem('amolHistory')) || [];
+
+        let settings = JSON.parse(localStorage.getItem('tasbihSettings')) || {
+            bnFont: "'Hind Siliguri'", arFont: "'Traditional Arabic'",
+            bnSize: '1.1rem', arSize: '2.2rem', cardBg: '#ffffff', isDarkMode: false, tasbihTarget: null
+        };
+
+        let currentTab = categories[0];
+        let currentSurahs = [];
+        let expandedIds = new Set();
+        let counterValue = parseInt(localStorage.getItem('tasbihCount')) || 0;
+        let searchQuery = "";
+        let deleteId = null;
+
+        const getToday = () => {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        };
+
+        const checkNewDay = () => {
+            const today = getToday();
+            if (!completions[today]) {
+                // If today is empty, it's a new day. Keep previous records as history.
+                completions[today] = {};
+                saveAll();
+            }
+        };
+
+        async function fetchSurahList() {
+            try {
+                const response = await fetch('https://api.alquran.cloud/v1/surah');
+                const data = await response.json();
+                currentSurahs = data.data;
+                renderSurahList(currentSurahs);
+            } catch (err) { console.error("API error", err); }
+        }
+
+        function renderSurahList(surahs) {
+            document.getElementById('surah-list-container').innerHTML = surahs.map(s => `
+                <div onclick="readSurah(${s.number})" class="quran-verse-card flex justify-between items-center cursor-pointer hover:border-emerald-500 transition-all">
+                    <div><h4 class="font-bold bn-text">${s.englishName}</h4><p class="text-[10px] opacity-60 uppercase">${s.numberOfAyahs} আয়াতে</p></div>
+                    <p class="arabic-text" style="font-size: 1.2rem;">${s.name}</p>
+                </div>`).join('');
+        }
+
+        async function readSurah(number) {
+            document.getElementById('surah-list-view').classList.add('hidden');
+            document.getElementById('surah-reading-view').classList.remove('hidden');
+            document.getElementById('quran-loader').classList.remove('hidden');
+            document.getElementById('verses-container').innerHTML = "";
+            window.scrollTo(0,0);
+            try {
+                const [arRes, bnRes] = await Promise.all([
+                    fetch(`https://api.alquran.cloud/v1/surah/${number}`),
+                    fetch(`https://api.alquran.cloud/v1/surah/${number}/bn.bengali`)
+                ]);
+                const arData = await arRes.json();
+                const bnData = await bnRes.json();
+                renderSurahContent(arData.data, bnData.data);
+            } catch (err) { console.error(err); } finally { document.getElementById('quran-loader').classList.add('hidden'); }
+        }
+
+        function renderSurahContent(ar, bn) {
+            let content = `<div class="text-center mb-10"><h2 class="arabic-text text-5xl mb-2">${ar.name}</h2></div>`;
+            ar.ayahs.forEach((ayah, index) => {
+                content += `
+                    <div id="ayah-${ayah.numberInSurah}" class="quran-verse-card">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold mt-2">${ayah.numberInSurah}</span>
+                            <p class="arabic-text text-right leading-loose">${ayah.text}</p>
+                        </div>
+                        <p class="bn-text opacity-80 leading-relaxed pl-8">${bn.ayahs[index].text}</p>
+                    </div>`;
+            });
+            document.getElementById('verses-container').innerHTML = content;
+        }
+
+        function jumpToAyah() {
+            const num = document.getElementById('ayahJumpInput').value;
+            const element = document.getElementById(`ayah-${num}`);
+            if (element) {
+                closeModal('gotoAyahModal');
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                element.classList.add('ayah-highlight');
+                setTimeout(() => element.classList.remove('ayah-highlight'), 2200);
+            }
+            document.getElementById('ayahJumpInput').value = "";
+        }
+
+        function saveAll() { 
+            localStorage.setItem('amolCategories', JSON.stringify(categories)); 
+            localStorage.setItem('amolData', JSON.stringify(appData)); 
+            localStorage.setItem('tasbihSettings', JSON.stringify(settings)); 
+            localStorage.setItem('tasbihCount', counterValue); 
+            localStorage.setItem('amolCompletions', JSON.stringify(completions));
+            localStorage.setItem('amolHistory', JSON.stringify(history));
+            updateHistory();
+        }
+
+        function updateHistory() {
+            const historyContainer = document.getElementById('history-container');
+            if (!historyContainer) return;
+            
+            // Generate list of last 7 dates
+            const dates = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                dates.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+            }
+
+            let html = '';
+            let totalAmols = 0;
+            Object.keys(appData).forEach(cat => totalAmols += appData[cat].length);
+
+            dates.forEach(date => {
+                const dayCompletions = completions[date] || {};
+                const doneCount = Object.values(dayCompletions).filter(v => v === true).length;
+                const percentage = totalAmols > 0 ? Math.round((doneCount / totalAmols) * 100) : 0;
+                
+                html += `
+                <div class="flex justify-between items-center bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm">
+                    <div class="flex flex-col">
+                        <span class="text-xs font-bold ${date === getToday() ? 'text-emerald-600' : 'text-gray-400'}">${date === getToday() ? 'আজ' : date}</span>
+                        <span class="text-[10px] text-gray-400">${doneCount}/${totalAmols} টি সম্পন্ন</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-20 h-1.5 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-emerald-500" style="width: ${percentage}%"></div>
+                        </div>
+                        <span class="text-[10px] font-bold text-emerald-600">${percentage}%</span>
+                    </div>
+                </div>`;
+            });
+            historyContainer.innerHTML = html;
+        }
+
+        function toggleCompletion(id, event) {
+            if (event) event.stopPropagation();
+            const today = getToday();
+            if (!completions[today]) completions[today] = {};
+            completions[today][id] = !completions[today][id];
+            saveAll();
+            renderList();
+        }
+
+        function updateSetting(key, value) { settings[key] = value; applySettings(); saveAll(); }
+        function toggleNightMode(isDark) { settings.isDarkMode = isDark; applySettings(); saveAll(); }
+
+        function applySettings() {
+            const root = document.documentElement;
+            root.style.setProperty('--bn-font', settings.bnFont);
+            root.style.setProperty('--ar-font', settings.arFont);
+            root.style.setProperty('--bn-size', settings.bnSize);
+            root.style.setProperty('--ar-size', settings.arSize);
+            if (!settings.isDarkMode) { root.style.setProperty('--card-bg', settings.cardBg); document.body.classList.remove('dark-mode'); }
+            else { document.body.classList.add('dark-mode'); }
+            document.getElementById('nightModeToggle').checked = settings.isDarkMode;
+            document.getElementById('bnFontSelect').value = settings.bnFont;
+            document.getElementById('arFontSelect').value = settings.arFont;
+            document.getElementById('bnSizeRange').value = parseFloat(settings.bnSize);
+            document.getElementById('arSizeRange').value = parseFloat(settings.arSize);
+            document.getElementById('popup-tTarget').innerText = settings.tasbihTarget ? `লক্ষ্য: ${settings.tasbihTarget}` : '';
+            renderColorPalette();
+            renderList();
+            updateHistory();
+        }
+
+        function renderColorPalette() {
+            document.getElementById('color-palette').innerHTML = colorPalette.map(color => `<div onclick="updateSetting('cardBg', '${color}')" class="color-dot ${settings.cardBg === color && !settings.isDarkMode ? 'active' : ''}" style="background-color: ${color}"></div>`).join('');
+        }
+
+        function switchTab(tab) { currentTab = tab; searchQuery = ""; document.getElementById('searchInput').value = ""; expandedIds.clear(); renderTabs(); renderList(); }
+        function filterAmols(val) { searchQuery = val.trim().toLowerCase(); document.getElementById('nav-tabs').classList.toggle('hidden', searchQuery !== ""); renderList(); }
+
+        function renderTabs() {
+            document.getElementById('tabs-container').innerHTML = categories.map(cat => `<button onclick="switchTab('${cat}')" class="px-6 py-2.5 rounded-2xl whitespace-nowrap text-sm font-bold transition-all ${currentTab === cat ? 'tab-active' : 'bg-white dark:bg-slate-800 text-gray-400 shadow-sm'}">${cat}</button>`).join('');
+            document.getElementById('fCat').innerHTML = categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+        }
+
+        function renderList() {
+            const list = document.getElementById('dua-list');
+            const today = getToday();
+            let items = [];
+            if (searchQuery) {
+                Object.keys(appData).forEach(cat => {
+                    appData[cat].filter(i => i.title.toLowerCase().includes(searchQuery) || (i.meaning && i.meaning.toLowerCase().includes(searchQuery))).forEach(m => items.push({...m, catName: cat}));
+                });
+            } else items = (appData[currentTab] || []).map(m => ({...m, catName: currentTab}));
+
+            if (items.length === 0) { list.innerHTML = `<div class="py-24 text-center text-gray-400 italic">কিছু পাওয়া যায়নি।</div>`; return; }
+            
+            list.innerHTML = items.map(item => {
+                const isExp = expandedIds.has(item.id);
+                const isDone = completions[today] && completions[today][item.id];
+                return `
+                <div class="custom-card shadow-sm overflow-hidden ${isExp ? 'expanded' : ''} ${isDone ? 'amol-done' : ''}">
+                    <div onclick="toggleDua(${item.id})" class="flex justify-between items-center p-6 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                        <div class="flex items-center space-x-4">
+                            <div onclick="toggleCompletion(${item.id}, event)" class="amol-checkbox flex-shrink-0 ${isDone ? 'checked' : ''}">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg leading-tight bn-text ${isDone ? 'line-through opacity-50' : ''}">${item.title}</h3>
+                                ${searchQuery ? `<span class="text-[9px] bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 px-2 py-0.5 rounded-lg font-bold">${item.catName}</span>` : ''}
+                            </div>
+                        </div>
+                        <span class="text-emerald-600 font-bold">${isExp ? '−' : '+'}</span>
+                    </div>
+                    <div class="accordion-content"><div><div class="px-6 pb-6 space-y-5">
+                        ${item.arabic ? `<div class="bg-black/5 dark:bg-black/20 p-6 rounded-3xl"><p class="arabic-text">${item.arabic}</p></div>` : ''}
+                        ${item.meaning ? `<div class="bg-emerald-50/50 dark:bg-emerald-900/10 p-4 rounded-2xl"><p class="bn-text leading-relaxed opacity-90">${item.meaning}</p></div>` : ''}
+                        <div class="flex justify-between items-center pt-2">
+                            <button onclick="event.stopPropagation(); copyDua('${item.catName}', ${item.id})" class="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 px-4 py-2 rounded-xl text-xs font-bold">কপি</button>
+                            <button onclick="event.stopPropagation(); requestDelete('${item.catName}', ${item.id})" class="text-red-300 p-2"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                        </div>
+                    </div></div></div>
+                </div>`;
+            }).join('');
+        }
+
+        function toggleDua(id) { if (expandedIds.has(id)) expandedIds.delete(id); else expandedIds.add(id); renderList(); }
+        function openModal(id) { document.getElementById(id).classList.add('show-modal'); if(id === 'settingsModal') updateHistory(); }
+        function closeModal(id) { document.getElementById(id).classList.remove('show-modal'); }
+        function incT() { counterValue++; document.getElementById('popup-tCount').innerText = counterValue; saveAll(); if (settings.tasbihTarget && counterValue == settings.tasbihTarget) { if (window.navigator.vibrate) window.navigator.vibrate([300, 100, 300]); } }
+        function resetT() { counterValue = 0; document.getElementById('popup-tCount').innerText = 0; saveAll(); }
+        function saveTarget() { settings.tasbihTarget = parseInt(document.getElementById('targetInput').value) || null; applySettings(); saveAll(); closeModal('targetModal'); }
+        
+        function copyDua(cat, id) {
+            const item = appData[cat].find(i => i.id === id);
+            const text = `${item.title}\n\n${item.arabic}\n\nঅর্থ: ${item.meaning}`;
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        function requestDelete(cat, id) { deleteId = id; currentTab = cat; openModal('confirmModal'); }
+        function executeDelete() { appData[currentTab] = appData[currentTab].filter(i => i.id !== deleteId); saveAll(); closeModal('confirmModal'); renderList(); }
+        function addNewCategory() { const name = document.getElementById('newCatName').value.trim(); if (name && !categories.includes(name)) { categories.push(name); appData[name] = []; saveAll(); switchTab(name); closeModal('catModal'); } }
+        
+        function openDeleteSelection() { 
+            closeModal('catModal'); 
+            document.getElementById('category-delete-list').innerHTML = categories.map(cat => `<button onclick="executeDeleteCategory('${cat}')" class="w-full text-left p-4 rounded-2xl bg-gray-50 dark:bg-slate-700 font-bold dark:text-white border border-gray-100 mb-2"><span>${cat}</span></button>`).join(''); 
+            openModal('deleteSelectionModal'); 
+        }
+
+        function executeDeleteCategory(name) { 
+            categories = categories.filter(c => c !== name); 
+            delete appData[name]; 
+            if (currentTab === name) currentTab = categories[0] || ""; 
+            saveAll(); 
+            closeModal('deleteSelectionModal'); 
+            renderTabs(); renderList(); 
+        }
+
+        function exportData() { 
+            const blob = new Blob([JSON.stringify({ categories, appData, settings, completions, history })], { type: 'application/json' }); 
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); 
+            a.download = `tasbih_backup.json`; a.click(); 
+        }
+
+        function importData(event) { 
+            const file = event.target.files[0]; 
+            if (!file) return; 
+            const reader = new FileReader(); 
+            reader.onload = (e) => { 
+                const data = JSON.parse(e.target.result); 
+                categories = data.categories; appData = data.appData; settings = data.settings;
+                completions = data.completions || {}; history = data.history || [];
+                saveAll(); location.reload(); 
+            }; 
+            reader.readAsText(file); 
+        }
+
+        function showView(view) { if (view === 'amol') { document.getElementById('amol-section').classList.remove('hidden'); document.getElementById('quran-section').classList.add('hidden'); document.getElementById('header-subtitle').innerText = "জীবনের প্রতিটি মুহূর্ত হোক ইবাদতে"; } }
+        
+        function toggleQuranMode() {
+            const amol = document.getElementById('amol-section'); 
+            const quran = document.getElementById('quran-section');
+            if (amol.classList.contains('hidden')) showView('amol');
+            else { 
+                amol.classList.add('hidden'); 
+                quran.classList.remove('hidden'); 
+                document.getElementById('header-subtitle').innerText = "ডিজিটাল কুরআন শরীফ"; 
+                if (currentSurahs.length === 0) fetchSurahList(); 
+            }
+        }
+
+        function backToSurahList() { document.getElementById('surah-list-view').classList.remove('hidden'); document.getElementById('surah-reading-view').classList.add('hidden'); }
+        function filterSurahs(query) { renderSurahList(currentSurahs.filter(s => s.englishName.toLowerCase().includes(query.toLowerCase()) || s.number.toString() === query)); }
+
+        document.getElementById('duaForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const targetCat = document.getElementById('fCat').value;
+            const newItem = { id: Date.now(), title: document.getElementById('fTitle').value, arabic: document.getElementById('fArabic').value, meaning: document.getElementById('fMeaning').value };
+            if (!appData[targetCat]) appData[targetCat] = [];
+            appData[targetCat].push(newItem); saveAll(); closeModal('duaModal'); e.target.reset(); switchTab(targetCat);
+        });
+
+        window.onload = () => { 
+            checkNewDay();
+            applySettings(); 
+            renderTabs(); 
+            renderList(); 
+            document.getElementById('popup-tCount').innerText = counterValue; 
+        };
+        window.onclick = (e) => { if (e.target.classList.contains('modal')) closeModal(e.target.id); };
+    </script>
+	<div id="toast">কপি হয়েছে!</div>
+</body>
+</html>
